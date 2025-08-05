@@ -13,8 +13,13 @@ min_price = st.number_input("Min price (EUR):", min_value=1, value=1)
 max_price = st.number_input("Max price (EUR):", min_value=1, value=10)
 min_length, max_length = st.slider("Domain name length (min to max characters):", 2, 20, (4, 8))
 
-if st.button("Clear Search"):
-    st.experimental_rerun()
+# --- Button Actions ---
+col1, col2 = st.columns([1, 1])
+with col1:
+    search_clicked = st.button("🔎 Search")
+with col2:
+    if st.button("❌ Clear Search"):
+        st.experimental_rerun()
 
 # --- Domain Generator ---
 def generate_domain_names(niche, min_len, max_len, count=20):
@@ -22,27 +27,27 @@ def generate_domain_names(niche, min_len, max_len, count=20):
     domains = []
     for _ in range(count):
         name = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=random.randint(min_len, max_len)))
-        domain = f"{name}{random.choice(extensions)}"
+        domain = f"{niche}{name}{random.choice(extensions)}"
         domains.append(domain)
     return list(set(domains))
 
-# --- Simulated Domain Availability & Pricing ---
+# --- Simulated Availability & Pricing ---
 def check_availability(domains):
     results = []
     for domain in domains:
         price = round(random.uniform(1, 1500), 2)
-        registrar = random.choice(['GoDaddy', 'Namecheap', 'Google Domains'])
-        retail_price = round(price * random.uniform(1.5, 2.5), 2)
+        registrar = random.choice(['GoDaddy', 'Namecheap', 'Google Domains', 'IONOS', 'Bluehost'])
+        resale_estimate = round(price * random.uniform(1.5, 3.5), 2)
         results.append({
             "Domain": domain,
             "Price (EUR)": price,
             "Registrar": registrar,
-            "Estimated Resale (EUR)": retail_price
+            "Estimated Resale (EUR)": resale_estimate
         })
     return results
 
-# --- Main Search Logic ---
-if niche:
+# --- Main Logic ---
+if search_clicked:
     domains = generate_domain_names(niche, min_length, max_length)
     checked = check_availability(domains)
     filtered = [d for d in checked if min_price <= d['Price (EUR)'] <= max_price]
@@ -54,8 +59,6 @@ if niche:
     else:
         st.warning("No domains found in that price range. Try adjusting your filters.")
 
-# --- Coming Soon Message ---
-st.markdown("""
----
-🔐 Trademark check & International registry alerts coming soon.
-""")
+# --- Coming Soon Section ---
+st.markdown("---")
+st.markdown("🔐 **Trademark check** & **International registry alerts (Malta + Global)** coming soon.")
