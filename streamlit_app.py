@@ -52,5 +52,31 @@ def check_availability(domains):
     for domain in domains:
         price = round(random.uniform(1, 1500), 2)
         registrar = random.choice(['GoDaddy', 'Namecheap', 'Google Domains', 'IONOS', 'Hover'])
-        resale_est = round(price * random.uniform(1.4,
-        
+        resale_est = round(price * random.uniform(1.4, 3.2), 2)
+        results.append({
+            "Domain": domain,
+            "Price (€)": price,
+            "Registrar": registrar,
+            "Estimated Resale (€)": resale_est
+        })
+    return results
+
+# --- Run Search ---
+if submitted:
+    if not selected_extensions:
+        st.error("Please select at least one domain extension.")
+    else:
+        generated_domains = generate_brandable_names(niche, min_len, max_len, selected_extensions)
+        results = check_availability(generated_domains)
+        filtered = [r for r in results if min_price <= r["Price (€)"] <= max_price]
+
+        if filtered:
+            st.success(f"Found {len(filtered)} domain(s) matching your criteria.")
+            df = pd.DataFrame(filtered)
+            st.dataframe(df, use_container_width=True)
+        else:
+            st.warning("No domains found with your filters. Try adjusting the extension, price, or name length.")
+
+# --- Footer ---
+st.markdown("---")
+st.markdown("🔐 Trademark checks & international registries coming soon.")
