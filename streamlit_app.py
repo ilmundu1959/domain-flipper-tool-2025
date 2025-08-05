@@ -1,63 +1,91 @@
 import streamlit as st
 import random
+import pandas as pd
+import io
 
-# ------------------ App Config ------------------
-st.set_page_config(page_title="Domain Flipper Tool", layout="centered")
-st.markdown("<h1 style='text-align: center; color: #4CAF50;'>🌍 Domain Flipper Tool</h1>", unsafe_allow_html=True)
-st.markdown("##### 🧠 Enter a niche and find domains you can flip for profit!")
+# --- UI Setup ---
+st.set_page_config(page_title="Domain Hunter AI", layout="centered")
+st.title("🔍 Domain Hunter AI")
+st.markdown("Find resellable, low-cost domains based on niche, length, and price range.")
 
-# ------------------ Input Form ------------------
-with st.form("domain_search_form"):
-    niche = st.text_input("Enter a niche or keyword (e.g. AI, eco, finance, pet)", max_chars=20)
-    min_price = st.number_input("Minimum price (€)", value=1, min_value=0)
-    max_price = st.number_input("Maximum price (€)", value=10, min_value=1)
-    tld_preference = st.selectbox("Preferred domain type", [".com", ".net", ".co", ".io", ".ai", "Any"])
-    submit = st.form_submit_button("🔍 Search Domains")
+# --- User Inputs ---
+niche = st.text_input("Enter niche or keyword (or exact domain to search):", "tech")
+exact_word = st.text_input("Or enter exact domain name to search (optional):", "")
+min_price = st.number_input("Min price (EUR):", min_value=1, value=1)
+max_price = st.number_input("Max price (EUR):", min_value=1, value=10)
+min_length, max_length = st.slider("Domain name length (min to max characters):", 2, 20, (4, 8))
 
-# ------------------ Demo Domain Generator ------------------
-def generate_domains(niche, tld, count=5):
-    sample_words = ["hub", "base", "center", "zone", "flip", "nest", "lab", "gen", "now", "flow"]
+sort_option = st.selectbox("Sort results by:", ["Price: Low to High", "Price: High to Low"])
+
+if st.button("Clear Search"):
+    st.experimental_rerun()
+
+# --- Domain Generator ---
+def generate_domain_names(niche, min_len, max_len, count=20):
+    extensions = ['.com', '.net', '.io']
     domains = []
-
     for _ in range(count):
-        name = niche.lower() + random.choice(sample_words)
-        extension = tld if tld != "Any" else random.choice([".com", ".net", ".co", ".io"])
-        price = round(random.uniform(1, 10), 2)
-        resale = round(price * random.uniform(5, 20), 2)
-        domains.append((name + extension, price, resale))
-    return domains
+        name = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=random.randint(min_len, max_len)))
+        domain = f"{name}{random.choice(extensions)}"
+        domains.append(domain)
+    return list(set(domains))
 
-# ------------------ On Submit ------------------
-if submit:
-    if not niche:
-        st.warning("Please enter a keyword or niche.")
+# --- Simulated Domain Availability & Pricing ---
+def check_availability(domains):
+    results = []
+    for domain in domains:
+        price = round(random.uniform(1, 1500), 2)
+        registrar = random.choice(['GoDaddy', 'Namecheap', 'Google Domains'])
+        retail_price = round(price * random.uniform(1.5, 2.5), 2)
+        results.append({
+            "Domain": domain,
+            "Price (EUR)": price,
+            "Registrar": registrar,
+            "Estimated Resale (EUR)": retail_price
+        })
+    return results
+
+# --- Main Search Logic ---
+results = []
+
+if exact_word.strip():
+    # Searching exact domain with all extensions
+    extensions = ['.com', '.net', '.io']
+    search_domains = [f"{exact_word.strip()}{ext}" for ext in extensions]
+    checked = check_availability(search_domains)
+    filtered = [d for d in checked if min_price <= d['Price (EUR)'] <= max_price
+                and min_length <= len(d['Domain'].split('.')[0]) <= max_length]
+    results = filtered
+elif niche.strip():
+    domains = generate_domain_names(niche, min_length, max_length)
+    checked = check_availability(domains)
+    filtered = [d for d in checked if min_price <= d['Price (EUR)'] <= max_price]
+    results = filtered
+
+if results:
+    # Sorting
+    if sort_option == "Price: Low to High":
+        results = sorted(results, key=lambda x: x['Price (EUR)'])
     else:
-        st.success(f"Showing available domains related to '{niche}'...")
-        domains = generate_domains(niche, tld_preference)
+        results = sorted(results, key=lambda x: x['Price (EUR)'], reverse=True)
 
-        for name, price, resale in domains:
-            st.markdown(f"""
-                <div style='border:1px solid #4CAF50; padding:10px; border-radius:10px; margin-bottom:10px'>
-                    <strong>🌐 Domain:</strong> <code>{name}</code><br>
-                    <strong>💶 Price:</strong> €{price}<br>
-                    <strong>📈 Suggested Resale Price:</strong> €{resale}
-                </div>
-            """, unsafe_allow_html=True)
+    st.success(f"Found {len(results)} matching domains:")
+    df = pd.DataFrame(results)
+    st.dataframe(df, use_container_width=True)
 
-        # ------------------ Trademark Checker ------------------
-        st.markdown("---")
-        st.subheader("🔎 Trademark & Registry Checker")
+    # Export CSV
+    csv = df.to_csv(index=False)
+    st.download_button(
+        label="Download results as CSV",
+        data=csv,
+        file_name='domain_hunter_results.csv',
+        mime='text/csv'
+    )
+else:
+    st.warning("No domains found in that price range. Try adjusting your filters or search term.")
 
-        st.info(f"Checking for trademarks or registry issues with: *{niche}*")
-
-        st.markdown(f"""
-        - 🔍 *EUIPO (Europe)* – No exact trademark match found.
-        - 🔍 *USPTO (USA)* – Clear.
-        - 🔍 *Malta Business Registry* – No active companies using this name.
-        """)
-
-        st.markdown("✅ You're clear to explore these domains. Still, double-check before buying.")
-
-        # ------------------ Clear Button ------------------
-        if st.button("🔄 Clear Search"):
-            st.experimental_rerun()
+# --- Coming Soon Message ---
+st.markdown("""
+---
+🔐 Trademark check & International registry alerts coming soon.
+""")
