@@ -5,60 +5,52 @@ import pandas as pd
 # --- UI Setup ---
 st.set_page_config(page_title="Domain Hunter AI", layout="centered")
 st.title("🔍 Domain Hunter AI")
-st.markdown("Find resellable, low-cost domains based on niche, length, and price range.")
+st.markdown("Find low-cost, brandable domains based on your niche and filters.")
+
+# --- Session State for Clearing ---
+if "clear" not in st.session_state:
+    st.session_state.clear = False
 
 # --- User Inputs ---
-niche = st.text_input("Enter niche or keyword:", "tech")
-min_price = st.number_input("Min price (EUR):", min_value=1, value=1)
-max_price = st.number_input("Max price (EUR):", min_value=1, value=10)
-min_length, max_length = st.slider("Domain name length (min to max characters):", 2, 20, (4, 8))
+with st.form("search_form"):
+    niche = st.text_input("Enter a niche or keyword (for inspiration only):", value="tech")
+    min_price = st.number_input("Minimum Price (€):", min_value=0, value=1)
+    max_price = st.number_input("Maximum Price (€):", min_value=1, value=10)
+    min_len, max_len = st.slider("Number of letters in domain name:", 2, 20, (4, 8))
+    selected_extensions = st.multiselect(
+        "Choose allowed extensions:",
+        options=[".com", ".net", ".io", ".co", ".ai", ".org"],
+        default=[".com"]
+    )
+    submitted = st.form_submit_button("🔎 Search")
+    if st.form_submit_button("❌ Clear Search"):
+        st.session_state.clear = True
 
-# --- Button Actions ---
-col1, col2 = st.columns([1, 1])
-with col1:
-    search_clicked = st.button("🔎 Search")
-with col2:
-    if st.button("❌ Clear Search"):
-        st.experimental_rerun()
+# --- Reset inputs if cleared ---
+if st.session_state.clear:
+    st.session_state.clear = False
+    st.experimental_rerun()
 
 # --- Domain Generator ---
-def generate_domain_names(niche, min_len, max_len, count=20):
-    extensions = ['.com', '.net', '.io']
+def generate_brandable_names(niche, min_len, max_len, extensions, count=30):
+    word_parts = ["zen", "ly", "hub", "base", "flip", "snap", "gen", "pulse", "loop", "deck", "boost"]
     domains = []
-    for _ in range(count):
-        name = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=random.randint(min_len, max_len)))
-        domain = f"{niche}{name}{random.choice(extensions)}"
-        domains.append(domain)
+
+    for _ in range(count * len(extensions)):
+        part1 = random.choice(word_parts)
+        part2 = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=random.randint(min_len-2, max_len-2)))
+        domain = part1 + part2
+        domain = domain[:max_len]
+        full_domain = domain + random.choice(extensions)
+        domains.append(full_domain)
+    
     return list(set(domains))
 
-# --- Simulated Availability & Pricing ---
+# --- Simulate domain availability ---
 def check_availability(domains):
     results = []
     for domain in domains:
         price = round(random.uniform(1, 1500), 2)
-        registrar = random.choice(['GoDaddy', 'Namecheap', 'Google Domains', 'IONOS', 'Bluehost'])
-        resale_estimate = round(price * random.uniform(1.5, 3.5), 2)
-        results.append({
-            "Domain": domain,
-            "Price (EUR)": price,
-            "Registrar": registrar,
-            "Estimated Resale (EUR)": resale_estimate
-        })
-    return results
-
-# --- Main Logic ---
-if search_clicked:
-    domains = generate_domain_names(niche, min_length, max_length)
-    checked = check_availability(domains)
-    filtered = [d for d in checked if min_price <= d['Price (EUR)'] <= max_price]
-
-    if filtered:
-        st.success(f"Found {len(filtered)} matching domains:")
-        df = pd.DataFrame(filtered)
-        st.dataframe(df, use_container_width=True)
-    else:
-        st.warning("No domains found in that price range. Try adjusting your filters.")
-
-# --- Coming Soon Section ---
-st.markdown("---")
-st.markdown("🔐 **Trademark check** & **International registry alerts (Malta + Global)** coming soon.")
+        registrar = random.choice(['GoDaddy', 'Namecheap', 'Google Domains', 'IONOS', 'Hover'])
+        resale_est = round(price * random.uniform(1.4,
+        
