@@ -92,5 +92,6 @@ if submitted and niche and min_len <= max_len and min_price <= max_price:
         
         st.markdown("*Trademark checks and international registry features coming soon.*")
 
-elif submitted:
-    st.warning("Please enter a valid niche and ensure all inputs are correct.")
+elif not submitted and not cleared:
+    st.info("Enter your criteria and press **Search Domains** to begin.")
+
