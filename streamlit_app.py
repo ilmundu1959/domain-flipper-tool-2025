@@ -29,7 +29,7 @@ with st.form("search_form"):
 # --- Reset inputs if cleared ---
 if st.session_state.clear:
     st.session_state.clear = False
-    st.experimental_rerun()
+    st.rerun()
 
 # --- Domain Generator ---
 def generate_brandable_names(niche, min_len, max_len, extensions, count=30):
