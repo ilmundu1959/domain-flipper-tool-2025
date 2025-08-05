@@ -36,15 +36,18 @@ def generate_brandable_names(niche, min_len, max_len, extensions, count=30):
     word_parts = ["zen", "ly", "hub", "base", "flip", "snap", "gen", "pulse", "loop", "deck", "boost"]
     domains = []
 
-    for _ in range(count * len(extensions)):
+    for _ in range(count):
         part1 = random.choice(word_parts)
-        part2 = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=random.randint(min_len-2, max_len-2)))
-        domain = part1 + part2
-        domain = domain[:max_len]
-        full_domain = domain + random.choice(extensions)
-        domains.append(full_domain)
+        part2 = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=random.randint(1, max_len - len(part1))))
+        domain_base = part1 + part2
+        domain_base = domain_base[:max_len]  # Trim to max length
+
+        for ext in extensions:
+            full_domain = domain_base + ext
+            if min_len <= len(domain_base) <= max_len:
+                domains.append(full_domain)
     
-    return list(set(domains))
+    return list(set(domains))  # Remove duplicates
 
 # --- Simulate domain availability ---
 def check_availability(domains):
