@@ -1,31 +1,52 @@
 import streamlit as st
-import requests
+import random
+import pandas as pd
+import io
 
-st.set_page_config(page_title="Domain Flipper Tool", layout="wide")
+# --- UI Setup ---
+st.set_page_config(page_title="Domain Hunter AI", layout="centered")
+st.title("🔍 Domain Hunter AI")
+st.markdown("Find resellable, low-cost domains based on niche, length, and price range.")
 
-st.title("🌐 Domain Flipper Tool")
-st.markdown("Find cheap, available domains with resale potential.")
+# --- User Inputs ---
+niche = st.text_input("Enter niche or keyword (or exact domain to search):", "tech")
+exact_word = st.text_input("Or enter exact domain name to search (optional):", "")
+min_price = st.number_input("Min price (EUR):", min_value=1, value=1)
+max_price = st.number_input("Max price (EUR):", min_value=1, value=10)
+min_length, max_length = st.slider("Domain name length (min to max characters):", 2, 20, (4, 8))
 
-with st.form("domain_search"):
-    niche = st.text_input("Enter a niche or keyword (e.g. tech, pets, crypto):")
-    letters = st.text_input("Preferred length or letters (e.g. 4-letter, short, trendy):")
-    min_price = st.number_input("Minimum Price (€)", min_value=0.0, value=1.0)
-    max_price = st.number_input("Maximum Price (€)", min_value=0.0, value=10.0)
-    submitted = st.form_submit_button("🔍 Search")
+sort_option = st.selectbox("Sort results by:", ["Price: Low to High", "Price: High to Low"])
 
-if submitted:
-    with st.spinner("Searching domains..."):
-        # Simulated results – in real version this would query GoDaddy or similar
-        st.success("Here are some domain suggestions:")
-        sample_domains = [
-            {"domain": "zexo.com", "price": 7.50, "valuation": 2500},
-            {"domain": "pynkz.com", "price": 5.99, "valuation": 1800},
-            {"domain": "cyvoa.com", "price": 6.49, "valuation": 2200},
-        ]
+if st.button("Clear Search"):
+    st.experimental_rerun()
 
-        for d in sample_domains:
-            st.write(f"🟢 *{d['domain']}* - €{d['price']} - Est. Resale: €{d['valuation']}")
+# --- Domain Generator ---
+def generate_domain_names(niche, min_len, max_len, count=20):
+    extensions = ['.com', '.net', '.io']
+    domains = []
+    for _ in range(count):
+        name = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=random.randint(min_len, max_len)))
+        domain = f"{name}{random.choice(extensions)}"
+        domains.append(domain)
+    return list(set(domains))
 
-        st.info("Trademark checks and international registries coming soon!")
+# --- Simulated Domain Availability & Pricing ---
+def check_availability(domains):
+    results = []
+    for domain in domains:
+        price = round(random.uniform(1, 1500), 2)
+        registrar = random.choice(['GoDaddy', 'Namecheap', 'Google Domains'])
+        retail_price = round(price * random.uniform(1.5, 2.5), 2)
+        results.append({
+            "Domain": domain,
+            "Price (EUR)": price,
+            "Registrar": registrar,
+            "Estimated Resale (EUR)": retail_price
+        })
+    return results
+
+# --- Main Search Logic ---
+results = []
+
 
 
